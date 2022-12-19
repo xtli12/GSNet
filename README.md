@@ -1,5 +1,6 @@
 # GSNet
 Guided Self-attention: Find the Generalized Necessarily Distinct Vectors for Grain Size Grading
+## Install
 ```
 conda create -n swin python=3.7 -y
 conda activate swin
