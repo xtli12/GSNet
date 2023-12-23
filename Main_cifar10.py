@@ -9,35 +9,8 @@ from utils_swin import AverageMeter, initialize_logger, save_checkpoint, record_
 import torchvision
 from torchvision import transforms
 import shutil
-# from swin1 import *
-# from our_swin import *
-# from our_swin_dense_no_transi_out2_Layernm import *
-# from our_swin_dense_no_transi import *
-# from swin_Den4KVStage3q_sota import *
-# from models_mae_224_14 import *
-# from swin_v2_224 import *
-# from timm import create_model as creat
-# from swin1 import *
-# from our_swin import *
-# from our_swin_dense_no_transi_out2_Layernm import *
-# from our_swin_dense_no_transi import *
-# from swin_Den4KVStage3q import *
-# from GSNet_steel_withtransition import *
-# from Swin_original import *
-# from Swin_S import *
-# from Swin_B import *
-# from densenet import *
-# from swin1 import *
-# from GSNet_cifar import *
-# from our_swin import *
-# from our_swin_dense_no_transi_out2 import *
-# from our_swin_dense_no_transi import *
-# import input_data
-# from cnn_finetune import make_model
-# from efficientnet_pytorch import EfficientNet
-# from Resnext50 import Resnext
-# from ViT import ViT
-from GSNet import *
+
+from GuesNet import *
 
 from PIL import ImageFile
 ImageFile.LOAD_TRUNCATED_IMAGES = True
@@ -92,55 +65,11 @@ def main():
     print("Validation set samples: ", len(data_loader_test))
     opt.max_iter = opt.end_epoch * len(data_loader)
     print("\nbuilding models_baseline ...")
-    # model = torchvision.models.resnet50(pretrained=True, num_classes=14)
-    # model = torchvision.models.__dict__['resnext101_32x8d'](pretrained=False)
-    # model = torchvision.models.__dict__['resnext50_32x4d'](pretrained=True)
-    # # model = torchvision.models.__dict__['resnet152'](pretrained=True)
-    # channel_in = model.fc.in_features      
-    # model.fc = nn.Linear(channel_in, 10)
-    # model = torchvision.models.__dict__['densenet201'](pretrained=True)
-    # channel_in = model.classifier.in_features 
-    # model.classifier = nn.Linear(channel_in, 10)
-    # model = densenet161()
-    # model = torchvision.models.__dict__['vgg19'](pretrained=True)
-    # model.classifier._modules['6'] = nn.Linear(4096, 10)
-    # model = make_model(model_name='inception_v3', num_classes=10, pretrained=True)
-    # model=EfficientNet.from_name('efficientnet-b0')
-    # model = EfficientNet.from_pretrained('efficientnet-b0')
-    # resume_file = os.path.join(os.path.join(opt.outf), 'efficientnet-b0-355c32eb.pth') 
-    # if resume_file:
-    #     if os.path.isfile(resume_file):
-    #         print("=> loading checkpoint '{}'".format(resume_file))
-    #         checkpoint = torch.load(resume_file, map_location=lambda storage, loc: storage.cuda(0))
-    #         # start_epoch = checkpoint['epoch']
-    #         # iteration = checkpoint['iter']
-    #         # model.load_state_dict(checkpoint['model'], strict = False)
-    #         model.load_state_dict(checkpoint, strict = False)
-    #         # optimizer.load_state_dict(checkpoint['optimizer'])
-    # num_ftrs = model._fc.in_features
-    # model._fc = nn.Linear(num_ftrs, 14)
-    # model = Resnext()
-    # model = ViT(image_size = 224,
-    # patch_size = 16,
-    # num_classes = 10,
-    # dim = 1024,
-    # depth = 24,
-    # heads = 16,
-    # mlp_dim = 2048,
-    # dropout = 0.1,
-    # emb_dropout = 0.1)
-    # model = creat('vit_large_patch16_224', pretrained=False, num_classes=10)
-    # model = nn.DataParallel(model, device_ids=[0, 1])
+
     model = SwinTransformer(hidden_dim=96, layers=(2, 2, 6, 2), heads=(3, 6, 12, 24), growth_rate=32,
                             block_config=(6, 12, 24, 16),
                             num_init_features=64, bn_size=4, drop_rate=0)
-    # model = SwinTransformer_original()
-    # model = SwinTransformer()
-    # model = SwinTransformerV2()
-    # mae = MaskedAutoencoderViT(
-    #     patch_size=16, embed_dim=768, depth=12, num_heads=12,
-    #     decoder_embed_dim=512, decoder_depth=8, decoder_num_heads=16,
-    #     mlp_ratio=4, norm_layer=partial(nn.LayerNorm, eps=1e-6))
+
 '''
   re-implement of ConvNext, CoAtNet, EVA-02, and MaxViT
 '''
