@@ -38,6 +38,7 @@ import shutil
 # from Resnext50 import Resnext
 # from ViT import ViT
 from GSNet import *
+import timm
 
 from PIL import ImageFile
 ImageFile.LOAD_TRUNCATED_IMAGES = True
@@ -88,10 +89,10 @@ def main():
     # model = torchvision.models.__dict__['resnext101_32x8d'](pretrained=True)
     # model = torchvision.models.__dict__['resnext50_32x4d'](pretrained=True)
     # model = torchvision.models.__dict__['resnet50'](pretrained=True)
-    # channel_in = model.fc.in_features        #最后一层叫fc
+    # channel_in = model.fc.in_features        
     # model.fc = nn.Linear(channel_in, 14)
     # model = torchvision.models.__dict__['densenet201'](pretrained=False)
-    # channel_in = model.classifier.in_features  #最后一层叫classifier
+    # channel_in = model.classifier.in_features  
     # model.classifier = nn.Linear(channel_in, 14)
     # model = densenet161()
     # model = torchvision.models.__dict__['vgg19'](pretrained=True)
@@ -99,7 +100,7 @@ def main():
     # model = make_model(model_name='inception_v3', num_classes=14, pretrained=True)
     # model=EfficientNet.from_name('efficientnet-b0')
     # model = EfficientNet.from_pretrained('efficientnet-b0')
-    # resume_file = os.path.join(os.path.join(opt.outf), 'efficientnet-b0-355c32eb.pth') # 预加载历史训练模型
+    # resume_file = os.path.join(os.path.join(opt.outf), 'efficientnet-b0-355c32eb.pth') 
     # if resume_file:
     #     if os.path.isfile(resume_file):
     #         print("=> loading checkpoint '{}'".format(resume_file))
@@ -134,6 +135,11 @@ def main():
     #     decoder_embed_dim=512, decoder_depth=8, decoder_num_heads=16,
     #     mlp_ratio=4, norm_layer=partial(nn.LayerNorm, eps=1e-6))
     # model = nn.DataParallel(model, device_ids=[0,1])
+
+  '''
+  re-implement of ConvNext, CoAtNet, EVA-02, and MaxViT
+  '''
+    # model = timm.create_model('convnext_xxlarge.clip_laion2b_soup_ft_in1k', pretrained=False, num_classes=14)
     criterion_train = nn.CrossEntropyLoss()
     torch.backends.cudnn.benchmark = True
 
@@ -163,12 +169,12 @@ def main():
 
     for epoch in range(start_epoch + 1, opt.end_epoch):
         start_time = time.time()
-        # train中参数：数据集，神经网络，traincss函数，优化器，epoch序号，训练次数，初始学习率
+        # train
         train_loss, iteration, lr = tra.train(data_loader, model, criterion_train, optimizer, epoch, iteration,
                                               opt.init_lr, opt.decay_power)
         acc = tra.validate(data_loader_test, model)  # 调用validate
-        if abs(acc - record_acc) < 0.001 or acc > record_acc or epoch % 50 == 0:  # 根据验证损失或者循环次数保存最优模型
-            save_checkpoint(opt.outf, epoch, iteration, model, optimizer)  # 输出路径，epoch序号，已经历的iter数，模型，优化器参数
+        if abs(acc - record_acc) < 0.001 or acc > record_acc or epoch % 50 == 0: 
+            save_checkpoint(opt.outf, epoch, iteration, model, optimizer)  
             if acc > record_acc:
                 record_acc = acc
         end_time = time.time()
@@ -177,49 +183,47 @@ def main():
         epoch, iteration, epoch_time, lr, train_loss, acc))
         record_loss1(loss_csv, epoch, iteration, epoch_time, lr, train_loss, acc)
         logger.info("Epoch [%02d], Iter[%06d], Time:%.9f, learning rate: %.9f, Train Loss: %.9f acc: %.9f " % (
-        epoch, iteration, epoch_time, lr, train_loss, acc))  # 保存每一代epoch的参数
+        epoch, iteration, epoch_time, lr, train_loss, acc))  
 
 
-'''
-神经网络训练主干，验证主干，部分工具函数
-'''
+
 
 
 class tra(nn.Module):
 
     def train(self, train_loader, model, criterion, optimizer, epoch, iteration, init_lr,
-              decay_power):  # 从epoch调用train函数处获取参数
-        model.train()  # 启用 BatchNormalization 和 Dropout
-        losses = AverageMeter()  # Aver是一个自定义管理参数更新的类，在utils中定义，update用于求平均
-        for i, (images, labels) in enumerate(train_loader):  # 从打开的数据集中读取数据对写入image和labels
+              decay_power): 
+        model.train()  
+        losses = AverageMeter()  
+        for i, (images, labels) in enumerate(train_loader): 
             labels = labels.cuda();
             labels = Variable(labels)
             images = images.cuda();
-            images = Variable(images)  # 用cuda转换为gpu数据类型,然后转换为变量
+            images = Variable(images) 
             lr = tra.poly_lr_scheduler(optimizer, init_lr, iteration, max_iter=opt.max_iter,
-                                       power=decay_power)  # 更新学习率和训练次数
+                                       power=decay_power) 
             iteration = iteration + 1  # iter+1
-            output = model(images) # 实际调用神经网络，将image-rgb输入AWAN得到一个输出
+            output = model(images) 
             # output = model.forward_encoder(images, mask_ratio=0.75)
-            loss = criterion(output, labels)  # 调用LossTrainCSS计算train-loss，其中lr乘以tradeoff（文中权重τ）
-            optimizer.zero_grad()  # 梯度归零
-            loss.backward()  # 反向传播计算每个参数梯度值
-            optimizer.step()  # 通过梯度下降执行一步参数更新
-            losses.update(loss.data)  # 调用aver的参数更新（求均值）
+            loss = criterion(output, labels) 
+            optimizer.zero_grad() 
+            loss.backward()  
+            optimizer.step()  
+            losses.update(loss.data)  
             print('[Epoch:%02d],[Process:%d/%d],[iter:%d],lr=%.9f,train_losses.avg=%.9f' % (
-            epoch, i, len(train_loader), iteration, lr, losses.avg))  # 打印一次参数
+            epoch, i, len(train_loader), iteration, lr, losses.avg))  
         return losses.avg, iteration, lr
 
     def validate(self, val_loader, model):
-        model.eval()  # 将模型转换为测试模式，避免bn和dropout层的影响
+        model.eval() 
         ac = 0
         idx_to_class = {0: '10.0', 1: '10.5', 2: '11.0', 3: '11.5', 4: '12.0', 5: '12.5', 6: '13.0', 7: '6.5', 8: '7.0',
                         9: '7.5', 10: '8.0', 11: '8.5', 12: '9.0', 13: '9.5'}
         for i, (input, target) in enumerate(val_loader):
             input = input.cuda();
             target = target.cuda()
-            with torch.no_grad():  # 屏蔽梯度计算与反向传播
-                output = model(input)  # 输入验证集图像得到一个输出
+            with torch.no_grad():  
+                output = model(input)  
                 # output = model.forward_encoder(input, mask_ratio=0.75)
                 _, pred = output.topk(1, 1, True, True)
                 pred = pred.flatten().cpu().numpy()
@@ -260,12 +264,10 @@ class tra(nn.Module):
         return dataset, sampler
 
 
-'''
-main.py的自启动
-'''
+
 
 if __name__ == '__main__':
     if torch.cuda.is_available():
         tra = tra().cuda()
-    main()  # 程序起点
-    print(torch.__version__)  # 打印torch版本
+    main()  
+    print(torch.__version__)  
