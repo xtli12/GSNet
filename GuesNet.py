@@ -234,7 +234,6 @@ class _Transition(nn.Sequential):
         self.add_module('pool', nn.AvgPool2d(kernel_size=2, stride=2))
 
 
-# AWCA模块
 class AWCA(nn.Module):
     def __init__(self, channel, reduction=16):
         super(AWCA, self).__init__()
@@ -257,9 +256,7 @@ class AWCA(nn.Module):
         y = self.fc(y).view(b, c, 1, 1)
         return x * y.expand_as(x)
 
-'''
-非本地二阶上下文模块
-'''
+
 
 class NONLocalBlock2D(nn.Module):
     def __init__(self, in_channels, reduction=8):
@@ -373,7 +370,7 @@ class SwinTransformer(nn.Module):
         ]))
         # Each denseblock
         num_features = num_init_features
-        for i, num_layers in enumerate(block_config):  # 读出索引值和值
+        for i, num_layers in enumerate(block_config):
             block = _DenseBlock(num_layers=num_layers, num_input_features=num_features,
                                 bn_size=bn_size, growth_rate=growth_rate, drop_rate=drop_rate)
             self.features.add_module('denseblock%d' % (i + 1), block)
@@ -459,7 +456,7 @@ class SwinTransformer(nn.Module):
         # out = F.view(features.size(0), -1)
         # out = self.classifier0(out)
 
-        # x = x.mean(dim=[2, 3]) # 去除第三四维
+        # x = x.mean(dim=[2, 3]) 
         # out1 = self.mlp_head(x)
         # p = out2 + out1
         return out
@@ -633,7 +630,7 @@ class WindowAttention4(nn.Module):
 
 if __name__ == '__main__':
     batch_size = 8
-    net = SwinTransformer(hidden_dim=96, layers=(2, 2, 6, 2), heads=(3, 6, 12, 24))  #创建对象
+    net = SwinTransformer(hidden_dim=96, layers=(2, 2, 6, 2), heads=(3, 6, 12, 24)) 
     # x = torch.rand(batch_size, 3,1376,1104)
     x = torch.rand(batch_size, 3, 384, 384)
     print(1)
