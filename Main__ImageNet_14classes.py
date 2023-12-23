@@ -3,9 +3,9 @@ import torch.optim as optim
 import torch.backends.cudnn as cudnn 
 from torch.utils.data import DataLoader 
 from torch.autograd import Variable 
-import os # 文件操作
-import time # 时间
-from utils_swin import AverageMeter, initialize_logger, save_checkpoint, record_loss # 参数初始化，训练结果保存，神经网络模型保存，记录loss，loss_train和rgb的计算
+import os 
+import time 
+from utils_swin import AverageMeter, initialize_logger, save_checkpoint, record_loss 
 import torchvision
 from torchvision import transforms
 import shutil
