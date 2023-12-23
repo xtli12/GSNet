@@ -60,7 +60,7 @@ parser.add_argument("--end_epoch", type=int, default=666, help="number of epochs
 parser.add_argument("--init_lr", type=float, default=0.001, help="initial learning rate")
 parser.add_argument("--decay_power", type=float, default=0.9, help="decay power")
 parser.add_argument("--max_iter", type=float, default=400000, help="max_iter")
-parser.add_argument("--outf", type=str, default="./Results/Cifar10_32_swinv2/", help='path log files') # 结果输出文件夹
+parser.add_argument("--outf", type=str, default="./Results/Cifar10_32_swinv2/", help='path log files') 
 opt = parser.parse_args()
 
 
@@ -77,8 +77,8 @@ def main():
         torch.backends.cudnn.benchmark = True
         shutil.copyfile(os.path.basename(__file__), opt.outf + os.path.basename(__file__))
 
-    # transform = transforms.Compose([transforms.Resize(224),transforms.ToTensor(), transforms.Normalize(mean=(0.4914, 0.4822, 0.4465), std=(0.2023, 0.1994, 0.2010))])  # 把数据变为tensor并且归一化range [0, 255] -> [0.0,1.0]
-    transform = transforms.Compose([transforms.Resize(32), transforms.ToTensor(), transforms.Normalize(mean=(0.4914, 0.4822, 0.4465), std=(0.2023, 0.1994, 0.2010))])  # 把数据变为tensor并且归一化range [0, 255] -> [0.0,1.0]
+    # transform = transforms.Compose([transforms.Resize(224),transforms.ToTensor(), transforms.Normalize(mean=(0.4914, 0.4822, 0.4465), std=(0.2023, 0.1994, 0.2010))])  
+    transform = transforms.Compose([transforms.Resize(32), transforms.ToTensor(), transforms.Normalize(mean=(0.4914, 0.4822, 0.4465), std=(0.2023, 0.1994, 0.2010))])  
     dataset = torchvision.datasets.CIFAR10(root='./cifar-10-batches-py2/', train=True, download=True,
                                             transform=transform)
     # sampler1 = torch.utils.data.RandomSampler(dataset)
@@ -96,10 +96,10 @@ def main():
     # model = torchvision.models.__dict__['resnext101_32x8d'](pretrained=False)
     # model = torchvision.models.__dict__['resnext50_32x4d'](pretrained=True)
     # # model = torchvision.models.__dict__['resnet152'](pretrained=True)
-    # channel_in = model.fc.in_features        #最后一层叫fc
+    # channel_in = model.fc.in_features      
     # model.fc = nn.Linear(channel_in, 10)
     # model = torchvision.models.__dict__['densenet201'](pretrained=True)
-    # channel_in = model.classifier.in_features  #最后一层叫classifier
+    # channel_in = model.classifier.in_features 
     # model.classifier = nn.Linear(channel_in, 10)
     # model = densenet161()
     # model = torchvision.models.__dict__['vgg19'](pretrained=True)
@@ -107,7 +107,7 @@ def main():
     # model = make_model(model_name='inception_v3', num_classes=10, pretrained=True)
     # model=EfficientNet.from_name('efficientnet-b0')
     # model = EfficientNet.from_pretrained('efficientnet-b0')
-    # resume_file = os.path.join(os.path.join(opt.outf), 'efficientnet-b0-355c32eb.pth') # 预加载历史训练模型
+    # resume_file = os.path.join(os.path.join(opt.outf), 'efficientnet-b0-355c32eb.pth') 
     # if resume_file:
     #     if os.path.isfile(resume_file):
     #         print("=> loading checkpoint '{}'".format(resume_file))
@@ -141,6 +141,10 @@ def main():
     #     patch_size=16, embed_dim=768, depth=12, num_heads=12,
     #     decoder_embed_dim=512, decoder_depth=8, decoder_num_heads=16,
     #     mlp_ratio=4, norm_layer=partial(nn.LayerNorm, eps=1e-6))
+'''
+  re-implement of ConvNext, CoAtNet, EVA-02, and MaxViT
+'''
+    # model = timm.create_model('convnext_xxlarge.clip_laion2b_soup_ft_in1k', pretrained=False, num_classes=14)
     criterion_train = nn.CrossEntropyLoss()
     torch.backends.cudnn.benchmark = True
 
@@ -182,7 +186,7 @@ def main():
         epoch, iteration, epoch_time, lr, train_loss, acc))
         record_loss(loss_csv, epoch, iteration, epoch_time, lr, train_loss, acc)
         logger.info("Epoch [%02d], Iter[%06d], Time:%.9f, learning rate: %.9f, Train Loss: %.9f acc: %.9f " % (
-        epoch, iteration, epoch_time, lr, train_loss, acc))  # 保存每一代epoch的参数
+        epoch, iteration, epoch_time, lr, train_loss, acc)) 
 
 class tra(nn.Module):
 
