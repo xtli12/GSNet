@@ -241,7 +241,7 @@ class tra(nn.Module):
         acc0_5 = torch.le(abs(pre_label - gt_label), 0.5)
         return acc0, acc0_5
 
-    def poly_lr_scheduler(self, optimizer, init_lr, iteraion, lr_decay_iter=1, max_iter=100, power=0.9):  # 学习率按iter次数下降
+    def poly_lr_scheduler(self, optimizer, init_lr, iteraion, lr_decay_iter=1, max_iter=100, power=0.9):  
         if iteraion % lr_decay_iter or iteraion > max_iter:
             return optimizer
         lr = init_lr * (1 - iteraion / max_iter) ** power
@@ -253,12 +253,12 @@ class tra(nn.Module):
         normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
         if is_train:
             dataset = torchvision.datasets.ImageFolder(dir, transforms.Compose([
-                transforms.Resize(224), transforms.CenterCrop(224),  # 随机形变压缩裁剪至224*224
+                transforms.Resize(224), transforms.CenterCrop(224),  
                 transforms.ToTensor(), normalize]))
             sampler = torch.utils.data.RandomSampler(dataset)
         else:
             dataset = torchvision.datasets.ImageFolder(dir, transforms.Compose([
-                transforms.Resize(224), transforms.CenterCrop(224),  # 压缩至256*256 中心裁剪224*224大小的验证图像
+                transforms.Resize(224), transforms.CenterCrop(224),  
                 transforms.ToTensor(), normalize]))
             sampler = torch.utils.data.SequentialSampler(dataset)
         return dataset, sampler
