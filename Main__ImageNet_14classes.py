@@ -137,6 +137,10 @@ def main():
     #     decoder_embed_dim=512, decoder_depth=8, decoder_num_heads=16,
     #     mlp_ratio=4, norm_layer=partial(nn.LayerNorm, eps=1e-6))
     # model = nn.DataParallel(model, device_ids=[0,1])
+'''
+  re-implement of ConvNext, CoAtNet, EVA-02, and MaxViT
+'''
+    
     model = timm.create_model('convnext_xxlarge.clip_laion2b_soup_ft_in1k', pretrained=False, num_classes=14)
     model = nn.DataParallel(model, device_ids=[0, 1])
     criterion_train = nn.CrossEntropyLoss() 
