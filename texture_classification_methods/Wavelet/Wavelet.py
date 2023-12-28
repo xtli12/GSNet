@@ -155,7 +155,7 @@ class WaveletCNN(nn.Module):
         p4 = self.proj4(x4)
 
         x5 = torch.hstack([p4,c4_2])
-
+ 
         avg_p = self.avgpool(x5)
 
         return self.classifier(avg_p.flatten(1))
