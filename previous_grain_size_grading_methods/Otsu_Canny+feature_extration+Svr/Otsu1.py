@@ -2,7 +2,7 @@ from PIL import Image
 import os, sys
 import numpy as np
 # import basic_threshold as bt
-
+ 
 '''
 file_name = "images/kidney.jpg"
 
