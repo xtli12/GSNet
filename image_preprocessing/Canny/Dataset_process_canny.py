@@ -1,5 +1,5 @@
 import os
-import os.path
+import os.path 
 import glob
 import numpy as np
 import argparse
