@@ -1,4 +1,4 @@
-import math
+import math 
 from torchvision import *
 from fuzzy_logical import *
 import cv2
