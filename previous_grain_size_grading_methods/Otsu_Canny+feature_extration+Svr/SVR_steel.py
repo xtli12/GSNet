@@ -1,4 +1,4 @@
-# import numpy as np
+# import numpy as np 
 #
 # raw_data = np.loadtxt('./canny_output/canny_result.txt')  
 # X = raw_data[:,:,-1 ] 
