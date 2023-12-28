@@ -5,7 +5,7 @@ import numpy as np
 
 '''
 file_name = "images/kidney.jpg"
-
+ 
 try:
   img = Image.open(file_name)
   img.load()
