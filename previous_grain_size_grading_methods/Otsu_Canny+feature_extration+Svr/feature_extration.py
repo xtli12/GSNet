@@ -215,7 +215,7 @@ if __name__ == "__main__":
     filename = '51276.jpg'
     xsize = 300
     ysize = 300
-    cropnum = 3
+    cropnum = 3 
     isCrop = True
     linenum = 8
     try:
