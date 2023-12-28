@@ -1,6 +1,6 @@
 import math
 from torchvision import *
-from fuzzy_logical import *
+from fuzzy_logical import * 
 import cv2
 from Otsu1 import *
 
