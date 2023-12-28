@@ -6,7 +6,7 @@ from Otsu1 import *
 
 
 def ObtainGradient(inputImage):
-    # Convert image to grayscale
+    # Convert image to grayscale 
     greyImage = cv2.cvtColor(inputImage, cv2.COLOR_BGR2GRAY)
     # Change the grayscale image into a array
     imageArray = np.asarray(greyImage, dtype="int32")
