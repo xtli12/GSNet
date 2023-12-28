@@ -1,7 +1,7 @@
 # import numpy as np
 #
-# raw_data = np.loadtxt('./canny_output/canny_result.txt')  # 读取数据文件
-# X = raw_data[:,:,-1 ]  # 分割自变量
+# raw_data = np.loadtxt('./canny_output/canny_result.txt')  
+# X = raw_data[:,:,-1 ] 
 # y = raw_data[:, -1]
 import torch
 from sklearn.svm import SVR
@@ -12,11 +12,11 @@ import numpy as np
 
 
 
-f = codecs.open('./otsu_output/otsu_train_result.txt', mode='r', encoding='utf-8')  # 打开txt文件，以‘utf-8'编码读取
+f = codecs.open('./otsu_output/otsu_train_result.txt', mode='r', encoding='utf-8')  
 
 
 
-line = f.readline()  # 以行的形式进行读取文件 
+line = f.readline()  
 
 x_train = []
 y_train = []
@@ -25,21 +25,20 @@ while line:
 
     a = line.split()
 
-    b = a[0:1]  # 这是选取需要读取的位数
-    # b[0] = b[0] / 10  #数据溢出。除10来减小
+    b = a[0:1]  
+    # b[0] = b[0] / 10 
     c = a[1:2]
 
-    x_train.append(b)  # 将其添加在列表之中
-    y_train.append(c)  # 将其添加在列表之中
+    x_train.append(b)  
+    y_train.append(c)  
     line = f.readline()
 
 f.close()
 
-f = codecs.open('./otsu_valid_output/otsu_val_result.txt', mode='r', encoding='utf-8')  # 打开txt文件，以‘utf-8'编码读取
+f = codecs.open('./otsu_valid_output/otsu_val_result.txt', mode='r', encoding='utf-8')  
 
 
-line = f.readline()  # 以行的形式进行读取文件
-
+line = f.readline()  
 x_test = []
 y_test = []
 y_test_pred =[]
@@ -47,12 +46,12 @@ while line:
 
     a = line.split()
 
-    b = a[0:1]  # 这是选取需要读取的位数
+    b = a[0:1] 
     # b = a[0:1]/10
     c = a[1:2]
 
-    x_test.append(b)  # 将其添加在列表之中
-    y_test.append(c)  # 将其添加在列表之中
+    x_test.append(b)  
+    y_test.append(c) 
     line = f.readline()
 
 f.close()
@@ -81,7 +80,7 @@ for i,pred in enumerate(y_pred):
     l = len(y_pred)
     b = y_test[i]
     b = b[0]
-    target = [k for k, v in idx_to_class.items() if v == b]  #以值找键，将字符串转换为浮点数
+    target = [k for k, v in idx_to_class.items() if v == b]  
     m = target [0]
     if abs(m - pred)==0:
         acc0 = 1
