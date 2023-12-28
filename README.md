@@ -1,5 +1,5 @@
-# GSNet
-Guided Self-attention: Find the Generalized Necessarily Distinct Vectors for Grain Size Grading
+# GuseNet
+Guided Self-attention: Find the Generalized Necessarily Distinct Vectors for Grain Size Grading 
 ## Install
 Create a conda virtual environment and activate it:
 ```
