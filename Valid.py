@@ -27,14 +27,13 @@ def main():
     os.environ["CUDA_DEVICE_ORDER"] = 'PCI_BUS_ID'
     os.environ["CUDA_VISIBLE_DEVICES"] = '1'
     start_time0 = time.time()
-    idx_to_class = {0: '10.0', 1: '10.5', 2: '11.0', 3: '11.5', 4: '12.0', 5: '12.5', 6: '13.0', 7: '6.5', 8: '7.0', 9: '7.5', 10: '8.0', 11: '8.5', 12: '9.0', 13: '9.5'}
-    idx_to_mdoel = {0: 'GSNet', 1: 'SwinV2_T', 2: 'DensNet121', 3: 'Mae', 4: 'ViT_B', 5: 'ResNet50', 6: 'ResNeXt50', 7: 'Inception_v3', 8: 'EfficientNet_b0'}
-    parser = argparse.ArgumentParser(description="SSR") # 可视描述符
+
+    parser = argparse.ArgumentParser(description="SSR") 
     parser.add_argument('--img_path', type=str, default='/data/home-gxu/lxt21/new_mae/datasets/validdata_rm_dup_rmerror_ep/', help='保存路径')
     # parser.add_argument('--img_path', type=str, default='/data/home-gxu/lxt21/new_mae/datasets/validdata_metric_test/', help='保存路径')
     parser.add_argument('--model_path_GSNet', type=str,default='/data/home-gxu/lxt21/new_mae/Results/steel_gsnet_224highest_pre/net_448epoch.pth', help='pth路径')
 
-    opt = parser.parse_args()  # 把参数解析器传入opt
+    opt = parser.parse_args() 
     model_GSNet = GSNet (hidden_dim=96, layers=(2, 2, 6, 2), heads=(3, 6, 12, 24), growth_rate=32, block_config=(6, 12, 24, 16), window_size=7, num_init_features=64, bn_size=4, drop_rate=0)
 
 
@@ -42,7 +41,7 @@ def main():
     model = model_GSNet
     save_point = torch.load(model_path)
     model.load_state_dict(save_point['model'])
-    if torch.cuda.is_available():  # 把模型转化为cuda类型
+    if torch.cuda.is_available(): 
         model.cuda()
     model.eval()
 
