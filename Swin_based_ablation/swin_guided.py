@@ -15,7 +15,7 @@ class CyclicShift(nn.Module):
         return torch.roll(x, shifts=(self.displacement, self.displacement), dims=(1, 2))
 
 
-class Residual(nn.Module):  # swin block中的残差连接
+class Residual(nn.Module):  
     def __init__(self, fn):
         super().__init__()
         self.fn = fn
@@ -213,7 +213,7 @@ class _DenseLayer(nn.Sequential):
         new_features = super(_DenseLayer, self).forward(x)
         if self.drop_rate > 0:
             new_features = F.dropout(new_features, p=self.drop_rate, training=self.training)
-        return torch.cat([x, new_features], 1)  # 按通道数来对其进行拼接，dim=1对应（， ， ， ）第二个通道数
+        return torch.cat([x, new_features], 1) 
 
 
 class _DenseBlock(nn.Sequential):
@@ -241,21 +241,21 @@ class AWCA(nn.Module):
         self.conv = nn.Conv2d(channel, 1, 1, bias=False)
         self.softmax = nn.Softmax(dim=2)
         self.fc = nn.Sequential(
-            nn.Linear(channel, channel // reduction, bias=False),  # 全连接层
+            nn.Linear(channel, channel // reduction, bias=False),  
             nn.PReLU(),
             nn.Linear(channel // reduction, channel, bias=False),
             nn.Sigmoid()
         )
 
     def forward(self, x):
-        b, c, h, w = x.size()  # 输入矩阵参数
-        input_x = x  # inputx为叉乘对象
-        input_x = input_x.view(b, c, h * w).unsqueeze(1)  # 用unsqueeze扩充一个行维，view调整矩阵维度为c*h*w
-        mask = self.conv(x).view(b, 1, h * w)  # 经过卷积层后为1*1*h*w，用view调整为1*1*(h*w)
-        mask = self.softmax(mask).unsqueeze(-1)  # 然后对Y进行正规化后扩充一个列维
-        y = torch.matmul(input_x, mask).view(b, c)  # 图中的叉乘输出变换为b*c的张量
-        y = self.fc(y).view(b, c, 1, 1)  # 对Z进行一系列处理包括两个全连接层、relu和sigmoid
-        return x * y.expand_as(x)  # 把输出扩张成原来的大小后点乘原输入x
+        b, c, h, w = x.size() 
+        input_x = x 
+        input_x = input_x.view(b, c, h * w).unsqueeze(1) 
+        mask = self.conv(x).view(b, 1, h * w)  
+        mask = self.softmax(mask).unsqueeze(-1)  
+        y = torch.matmul(input_x, mask).view(b, c)  
+        y = self.fc(y).view(b, c, 1, 1) 
+        return x * y.expand_as(x) 
 
 '''
 非本地二阶上下文模块
@@ -264,16 +264,16 @@ class AWCA(nn.Module):
 class NONLocalBlock2D(nn.Module):
     def __init__(self, in_channels, reduction=8):
         super(NONLocalBlock2D, self).__init__()
-        # 数组维数读取
-        self.in_channels = in_channels # 读入通道数
-        self.inter_channels = self.in_channels // reduction # 通道缩放因子原文图中为r大小是8
-        conv_nd = nn.Conv2d # 调用二维卷积
+    
+        self.in_channels = in_channels
+        self.inter_channels = self.in_channels 
+        conv_nd = nn.Conv2d 
         max_pool_layer = nn.MaxPool2d(kernel_size=(2, 2))
-        bn = nn.BatchNorm2d # 调用归一化处理
+        bn = nn.BatchNorm2d 
         self.W = conv_nd(in_channels=self.inter_channels, out_channels=self.in_channels,
                              kernel_size=1, stride=1, padding=0, bias=False)
-        nn.init.constant_(self.W.weight, 0) # 用0填充向量
-        # 二维卷积层
+        nn.init.constant_(self.W.weight, 0) 
+
         self.g = conv_nd(in_channels=self.in_channels, out_channels=self.inter_channels,
                          kernel_size=1, stride=1, padding=0, bias=False)
         self.theta = conv_nd(in_channels=self.in_channels, out_channels=self.inter_channels,
@@ -282,28 +282,28 @@ class NONLocalBlock2D(nn.Module):
     def count_cov_second(self, input):
         x = input
         batchSize, dim, M = x.data.shape
-        x_mean_band = x.mean(2).view(batchSize, dim, 1).expand(batchSize, dim, M) # 对第三维度求均值，然后填充成M维
-        y = (x - x_mean_band).bmm(x.transpose(1, 2)) / M # 减去第三维度的均值乘以经过变换的x再除以m
+        x_mean_band = x.mean(2).view(batchSize, dim, 1).expand(batchSize, dim, M) 
+        y = (x - x_mean_band).bmm(x.transpose(1, 2)) / M 
         return y
 
     # 定义网络结构
     def forward(self, x):
-        batch_size = x.size(0) # 读取数据并进行维度变换
-        g_x = self.g(x).view(batch_size, self.inter_channels, -1) # 1*1*c/r 卷积层
-        g_x = g_x.permute(0, 2, 1) # 维度转换
-        theta_x = self.theta(x).view(batch_size, self.inter_channels, -1) # 卷积层
-        theta_x = theta_x.permute(0, 2, 1) # 维度转换
-        f = self.count_cov_second(theta_x) # 求协方差矩阵
-        f_div_C = F.softmax(f, dim=-1) # softmax归一化
-        y = torch.matmul(f_div_C, g_x) # tensor矩阵乘法 即图片里的乘号
-        y = y.permute(0, 2, 1).contiguous() # 重组、转置
+        batch_size = x.size(0)
+        g_x = self.g(x).view(batch_size, self.inter_channels, -1) 
+        g_x = g_x.permute(0, 2, 1) 
+        theta_x = self.theta(x).view(batch_size, self.inter_channels, -1)
+        theta_x = theta_x.permute(0, 2, 1) 
+        f = self.count_cov_second(theta_x)
+        f_div_C = F.softmax(f, dim=-1) 
+        y = torch.matmul(f_div_C, g_x) 
+        y = y.permute(0, 2, 1).contiguous() 
         y = y.view(batch_size, self.inter_channels, *x.size()[2:])
-        W_y = self.W(y) # 1*1*C卷积层
+        W_y = self.W(y) #
         z = W_y + x
         return z
 
 '''
-downsample环节，卷积核为自定义，目的是缩小图像大小
+
 '''
 
 def pixel_unshuffle(input, downscale_factor):
@@ -314,18 +314,16 @@ def pixel_unshuffle(input, downscale_factor):
             kernel[x + y * downscale_factor::downscale_factor * downscale_factor, 0, y, x] = 1
     return F.conv2d(input, kernel, stride=downscale_factor, groups=c)
 
-'''
-PSNL模块
-'''
+
 
 class PSNL(nn.Module):
     def __init__(self, channels):
         super(PSNL, self).__init__()
-        # nonlocal module 调用NON
+        # nonlocal module 
         self.non_local = NONLocalBlock2D(channels)
 
     def forward(self,x):
-        batch_size, C, H, W = x.shape # 将输入按照w和h维度分割为大小相同的4块
+        batch_size, C, H, W = x.shape
         H1 = int(H / 2)
         W1 = int(W / 2)
         nonlocal_feat = torch.zeros_like(x)
@@ -333,7 +331,7 @@ class PSNL(nn.Module):
         feat_sub_ld = x[:, :, H1:, :W1]
         feat_sub_ru = x[:, :, :H1, W1:]
         feat_sub_rd = x[:, :, H1:, W1:]
-        nonlocal_lu = self.non_local(feat_sub_lu) # 实际调用non
+        nonlocal_lu = self.non_local(feat_sub_lu) 
         nonlocal_ld = self.non_local(feat_sub_ld)
         nonlocal_ru = self.non_local(feat_sub_ru)
         nonlocal_rd = self.non_local(feat_sub_rd)
@@ -379,7 +377,7 @@ class SwinTransformer(nn.Module):
         ]))
         # Each denseblock
         num_features = num_init_features
-        for i, num_layers in enumerate(block_config):  # 读出索引值和值
+        for i, num_layers in enumerate(block_config):  
             block = _DenseBlock(num_layers=num_layers, num_input_features=num_features,
                                 bn_size=bn_size, growth_rate=growth_rate, drop_rate=drop_rate)
             self.features.add_module('denseblock%d' % (i + 1), block)
@@ -421,36 +419,36 @@ class SwinTransformer(nn.Module):
         self.cc = nn.Conv2d(675, 384, kernel_size=1, stride=1, bias=False)
         self.cd = nn.Conv2d(1443, 768, kernel_size=1, stride=1, bias=False)
         self.yy = nn.Conv2d(768, 384, kernel_size=1, stride=1, bias=False)
-        self.conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1)  # 输出 64x224x224
-        self.pool = nn.MaxPool2d(kernel_size=2, stride=2, padding=0)  # 输出 64x112x112
-        self.conv2 = nn.Conv2d(64, 128, kernel_size=3, stride=1, padding=1)  # 输出 128x112x112
-        self.conv3 = nn.Conv2d(128, 256, kernel_size=3, stride=1, padding=1)  # 输出 256x112x112
-        self.conv4 = nn.Conv2d(256, 256, kernel_size=3, stride=1, padding=1)  # 输出 256x112x112
-        self.conv33 = nn.Conv2d(96, 256, kernel_size=3, stride=1, padding=1)  # 输出 256x112x112
-        self.conv44 = nn.Conv2d(256, 256, kernel_size=3, stride=1, padding=1)  # 输出 256x112x112
-        self.conv444 = nn.Conv2d(192, 256, kernel_size=3, stride=1, padding=1)  # 输出 256x112x112
+        self.conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1) 
+        self.pool = nn.MaxPool2d(kernel_size=2, stride=2, padding=0) 
+        self.conv2 = nn.Conv2d(64, 128, kernel_size=3, stride=1, padding=1)  
+        self.conv3 = nn.Conv2d(128, 256, kernel_size=3, stride=1, padding=1)  
+        self.conv4 = nn.Conv2d(256, 256, kernel_size=3, stride=1, padding=1) 
+        self.conv33 = nn.Conv2d(96, 256, kernel_size=3, stride=1, padding=1) 
+        self.conv44 = nn.Conv2d(256, 256, kernel_size=3, stride=1, padding=1)  
+        self.conv444 = nn.Conv2d(192, 256, kernel_size=3, stride=1, padding=1)  
     def forward(self, img):
-        x = self.conv1(img)  # 卷积层1
-        x = self.pool(x)  # 最大池化层1
-        x = self.conv2(x)  # 卷积层2
-        x = self.pool(x)  # 最大池化层2
-        x = self.conv3(x)  # 卷积层3
-        x = self.pool(x)  # 最大池化层3
-        x = self.conv4(x)  # 卷积层4
-        x1 = self.pool(x)  # 最大池化层4
-        s1 = self.stage1(img)                            # swin stage1输出
-        x2 = self.conv33(s1)  # 卷积层3
-        x2 = self.pool(x2)  # 最大池化层3
-        x2 = self.conv44(x2)  # 卷积层4
-        x2 = self.pool(x2)  # 最大池化层4
-        s2 = self.stage2(s1)                              # swin stage2输出
-        x3 = self.conv444(s2)  # 卷积层4
-        x3 = self.pool(x3)  # 最大池化层4
-        x123 = torch.cat([x1, x2, x3], 1)                 # 第二个concat
+        x = self.conv1(img)  
+        x = self.pool(x) 
+        x = self.conv2(x)  
+        x = self.pool(x) 
+        x = self.conv3(x)
+        x = self.pool(x) 
+        x = self.conv4(x)  
+        x1 = self.pool(x) 
+        s1 = self.stage1(img)                          
+        x2 = self.conv33(s1) 
+        x2 = self.pool(x2)
+        x2 = self.conv44(x2)  
+        x2 = self.pool(x2) 
+        s2 = self.stage2(s1)                             
+        x3 = self.conv444(s2)  
+        x3 = self.pool(x3)  
+        x123 = torch.cat([x1, x2, x3], 1)             
         s3 = self.stage3(s2)
         y = self.yy(x123)
-        yx123 = torch.cat([s3, y], 1)                        # c通道 x:前384 y：后384
-        s4 = self.stage4(yx123)                              # 支路1输出
+        yx123 = torch.cat([s3, y], 1)                     
+        s4 = self.stage4(yx123)                             
         out = self.cf(s4)
         # out = self.bn1(out)
         out = self.Re(out)
@@ -462,7 +460,7 @@ class SwinTransformer(nn.Module):
         # out = F.view(features.size(0), -1)
         # out = self.classifier0(out)
 
-        # x = x.mean(dim=[2, 3]) # 去除第三四维
+        # x = x.mean(dim=[2, 3]) 
         # out1 = self.mlp_head(x)
         # p = out2 + out1
         return out
