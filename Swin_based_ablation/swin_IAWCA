@@ -9,21 +9,21 @@ class AWCA(nn.Module):
         self.conv = nn.Conv2d(channel, 1, 1, bias=False)
         self.softmax = nn.Softmax(dim=2)
         self.fc = nn.Sequential(
-            nn.Linear(channel, channel // reduction, bias=False),  # 全连接层
+            nn.Linear(channel, channel // reduction, bias=False), 
             nn.PReLU(),
             nn.Linear(channel // reduction, channel, bias=False),
             nn.Sigmoid()
         )
 
     def forward(self, x):
-        b, c, h, w = x.size()  # 输入矩阵参数
-        input_x = x  # inputx为叉乘对象
-        input_x = input_x.view(b, c, h * w).unsqueeze(1)  # 用unsqueeze扩充一个行维，view调整矩阵维度为c*h*w
-        mask = self.conv(x).view(b, 1, h * w)  # 经过卷积层后为1*1*h*w，用view调整为1*1*(h*w)
-        mask = self.softmax(mask).unsqueeze(-1)  # 然后对Y进行正规化后扩充一个列维
-        y = torch.matmul(input_x, mask).view(b, c)  # 图中的叉乘输出变换为b*c的张量
-        y = self.fc(y).view(b, c, 1, 1)  # 对Z进行一系列处理包括两个全连接层、relu和sigmoid
-        return x * y.expand_as(x)  # 把输出扩张成原来的大小后点乘原输入x
+        b, c, h, w = x.size()  
+        input_x = x  
+        input_x = input_x.view(b, c, h * w).unsqueeze(1)  
+        mask = self.conv(x).view(b, 1, h * w) 
+        mask = self.softmax(mask).unsqueeze(-1)  
+        y = torch.matmul(input_x, mask).view(b, c) 
+        y = self.fc(y).view(b, c, 1, 1) 
+        return x * y.expand_as(x)  
 
 class CyclicShift(nn.Module):
     def __init__(self, displacement):
@@ -32,9 +32,9 @@ class CyclicShift(nn.Module):
 
     def forward(self, x):
         return torch.roll(x, shifts=(self.displacement, self.displacement), dims=(1, 2))
-#swin关键代码：移位操作，x是目标张量，shifts表示滚动的方向（正负号：正号从上往下）长度（数字），dim表示在那个维度进行滚动
 
-class Residual(nn.Module): #block中的残差连接
+
+class Residual(nn.Module): 
     def __init__(self, fn):
         super().__init__()
         self.fn = fn
@@ -43,13 +43,13 @@ class Residual(nn.Module): #block中的残差连接
         return self.fn(x, **kwargs) + x
 
 
-class PreNorm(nn.Module):     # layernorm层
+class PreNorm(nn.Module):     
     def __init__(self, dim, fn):
         super().__init__()
         self.norm = nn.LayerNorm(dim)
         self.fn = fn
 
-    def forward(self, x, **kwargs):   # 将main函数中预设值键值对进行一个层归一化操作再返回，fn应该是函数传参的一种手法
+    def forward(self, x, **kwargs):  
         return self.fn(self.norm(x), **kwargs)
 
 
@@ -66,7 +66,7 @@ class FeedForward(nn.Module):   # MLP层
         return self.net(x)
 
 
-def create_mask(window_size, displacement, upper_lower, left_right):  ###制造掩码###
+def create_mask(window_size, displacement, upper_lower, left_right): 
     mask = torch.zeros(window_size ** 2, window_size ** 2)
 
     if upper_lower:
@@ -84,7 +84,7 @@ def create_mask(window_size, displacement, upper_lower, left_right):  ###制造�
 
 def get_relative_distances(window_size):
     indices = torch.tensor(np.array([[x, y] for x in range(window_size) for y in range(window_size)]))
-    distances = indices[None, :, :] - indices[:, None, :]   # None的作用是在制定位置快速扩充维度
+    distances = indices[None, :, :] - indices[:, None, :]   
     return distances
 
 
@@ -94,7 +94,7 @@ class WindowAttention(nn.Module):
         inner_dim = head_dim * heads
 
         self.heads = heads
-        self.scale = head_dim ** -0.5   # 计算相似度时除的分母
+        self.scale = head_dim ** -0.5   
         self.window_size = window_size
         self.relative_pos_embedding = relative_pos_embedding
         self.shifted = shifted
@@ -108,12 +108,12 @@ class WindowAttention(nn.Module):
             self.left_right_mask = nn.Parameter(create_mask(window_size=window_size, displacement=displacement,
                                                             upper_lower=False, left_right=True), requires_grad=False)
 
-        self.to_qkv = nn.Linear(dim, inner_dim * 3, bias=False)   # 将同一个向量通过线性层投射成三个
+        self.to_qkv = nn.Linear(dim, inner_dim * 3, bias=False)   
 
-        if self.relative_pos_embedding:   # 对经过自注意力机制的窗口进行位置编码
+        if self.relative_pos_embedding:  
             self.relative_indices = get_relative_distances(window_size) + window_size - 1
             self.pos_embedding = nn.Parameter(torch.randn(2 * window_size - 1, 2 * window_size - 1))
-            #nn.Parameter内的参数默认是可训练的，torch.randn()返回一个符合均值为0，方差为1的正态分布（标准正态分布）中填充随机数的张量
+            #nn.Parameter
         else:
             self.pos_embedding = nn.Parameter(torch.randn(window_size ** 2, window_size ** 2))
 
@@ -123,20 +123,20 @@ class WindowAttention(nn.Module):
         if self.shifted:
             x = self.cyclic_shift(x)
 
-        b, n_h, n_w, _, h = *x.shape, self.heads    # 提取batchsize、特征图尺寸、通道数，和注意力头
+        b, n_h, n_w, _, h = *x.shape, self.heads  
 
-        qkv = self.to_qkv(x).chunk(3, dim=-1)    # 应该是将相同向量投射成h个头，再用chunk将张量按最后一个维度将其切成三块
-        nw_h = n_h // self.window_size  # 应该是以窗口为单位的特征图大小，窗口不同于patch，窗口用于自注意力机制
+        qkv = self.to_qkv(x).chunk(3, dim=-1)  
+        nw_h = n_h // self.window_size  
         nw_w = n_w // self.window_size
 
         q, k, v = map(
             lambda t: rearrange(t, 'b (nw_h w_h) (nw_w w_w) (h d) -> b h (nw_h nw_w) (w_h w_w) d',
                                 h=h, w_h=self.window_size, w_w=self.window_size), qkv)
-        # map的作用是用括号内的方法处理括号内的数据：利用rearrange函数对张量进行维度操作，可以交换维度顺序，并且把括号内的维度展开
 
-        dots = einsum('b h w i d, b h w j d -> b h w i j', q, k) * self.scale   #  对在q，k张量中下标是b h w i j的数据进行内积
 
-        if self.relative_pos_embedding:    #对window进行位置编码
+        dots = einsum('b h w i d, b h w j d -> b h w i j', q, k) * self.scale  
+
+        if self.relative_pos_embedding:   
             dots += self.pos_embedding[self.relative_indices[:, :, 0], self.relative_indices[:, :, 1]]
         else:
             dots += self.pos_embedding
@@ -147,7 +147,7 @@ class WindowAttention(nn.Module):
 
         attn = dots.softmax(dim=-1)
 
-        out = einsum('b h w i j, b h w j d -> b h w i d', attn, v)  # 将经过自注意力处理的权重与V进行相乘
+        out = einsum('b h w i j, b h w j d -> b h w i d', attn, v)  
         out = rearrange(out, 'b h (nw_h nw_w) (w_h w_w) d -> b (nw_h w_h) (nw_w w_w) (h d)',
                         h=h, w_h=self.window_size, w_w=self.window_size, nw_h=nw_h, nw_w=nw_w)
         out = self.to_out(out)
@@ -169,26 +169,26 @@ class SwinBlock(nn.Module):    # Block层
         self.mlp_block = Residual(PreNorm(dim, FeedForward(dim=dim, hidden_dim=mlp_dim)))
 
     def forward(self, x):
-        x = self.attention_block(x)   #自注意力机制层
-        x = self.mlp_block(x)         #MLP层
+        x = self.attention_block(x) 
+        x = self.mlp_block(x)      
         return x
 
 
-class PatchMerging(nn.Module):    #根据文章：将patchs融合，使其数量减小一半#
+class PatchMerging(nn.Module):   
     def __init__(self, in_channels, out_channels, downscaling_factor):
         super().__init__()
         self.downscaling_factor = downscaling_factor
         self.patch_merge = nn.Unfold(kernel_size=downscaling_factor, stride=downscaling_factor, padding=0)
-        #模仿的是卷积操作的滑动窗口的操作，只有卷没有积【只是提取区域，没有乘权重】，输入数四维，输出是三维【batch数，滑动窗口的面积x通道数，滑动的次数】
+
         self.linear = nn.Linear(in_channels * downscaling_factor ** 2, out_channels)
 
     def forward(self, x):
-        b, c, h, w = x.shape    # 读取batchsize、通道数、图片高、宽
-        new_h, new_w = h // self.downscaling_factor, w // self.downscaling_factor   # 重新规定特征图大小
+        b, c, h, w = x.shape    
+        new_h, new_w = h // self.downscaling_factor, w // self.downscaling_factor  
         # x = self.patch_merge(x)
         x = self.patch_merge(x).view(b, -1, new_h, new_w).permute(0, 2, 3, 1)
-        # 先用unfold函数重构成三维张量，然后view相当于重新定义图片的形状（其中-1的意思是在保持总的乘积不变的情况下，规定了其中三个变量，第四个让计算机自己算），permute交换张量中各维度位置，
-        x = self.linear(x)   # 线性层改变通道数
+
+        x = self.linear(x)  
         return x
 
 
