@@ -15,7 +15,7 @@ class CyclicShift(nn.Module):
         return torch.roll(x, shifts=(self.displacement, self.displacement), dims=(1, 2))
 
 
-class Residual(nn.Module):  # swin block中的残差连接
+class Residual(nn.Module): 
     def __init__(self, fn):
         super().__init__()
         self.fn = fn
@@ -213,7 +213,7 @@ class _DenseLayer(nn.Sequential):
         new_features = super(_DenseLayer, self).forward(x)
         if self.drop_rate > 0:
             new_features = F.dropout(new_features, p=self.drop_rate, training=self.training)
-        return torch.cat([x, new_features], 1)  # 按通道数来对其进行拼接，dim=1对应（， ， ， ）第二个通道数
+        return torch.cat([x, new_features], 1) 
 
 
 class _DenseBlock(nn.Sequential):
@@ -241,39 +241,37 @@ class AWCA(nn.Module):
         self.conv = nn.Conv2d(channel, 1, 1, bias=False)
         self.softmax = nn.Softmax(dim=2)
         self.fc = nn.Sequential(
-            nn.Linear(channel, channel // reduction, bias=False),  # 全连接层
+            nn.Linear(channel, channel // reduction, bias=False),  
             nn.PReLU(),
             nn.Linear(channel // reduction, channel, bias=False),
             nn.Sigmoid()
         )
 
     def forward(self, x):
-        b, c, h, w = x.size()  # 输入矩阵参数
-        input_x = x  # inputx为叉乘对象
-        input_x = input_x.view(b, c, h * w).unsqueeze(1)  # 用unsqueeze扩充一个行维，view调整矩阵维度为c*h*w
-        mask = self.conv(x).view(b, 1, h * w)  # 经过卷积层后为1*1*h*w，用view调整为1*1*(h*w)
-        mask = self.softmax(mask).unsqueeze(-1)  # 然后对Y进行正规化后扩充一个列维
-        y = torch.matmul(input_x, mask).view(b, c)  # 图中的叉乘输出变换为b*c的张量
-        y = self.fc(y).view(b, c, 1, 1)  # 对Z进行一系列处理包括两个全连接层、relu和sigmoid
-        return x * y.expand_as(x)  # 把输出扩张成原来的大小后点乘原输入x
+        b, c, h, w = x.size()  
+        input_x = x  
+        input_x = input_x.view(b, c, h * w).unsqueeze(1)
+        mask = self.conv(x).view(b, 1, h * w)  
+        mask = self.softmax(mask).unsqueeze(-1)  
+        y = torch.matmul(input_x, mask).view(b, c)  
+        y = self.fc(y).view(b, c, 1, 1) 
+        return x * y.expand_as(x)  
 
-'''
-非本地二阶上下文模块
-'''
+
 
 class NONLocalBlock2D(nn.Module):
     def __init__(self, in_channels, reduction=8):
         super(NONLocalBlock2D, self).__init__()
-        # 数组维数读取
-        self.in_channels = in_channels # 读入通道数
-        self.inter_channels = self.in_channels // reduction # 通道缩放因子原文图中为r大小是8
-        conv_nd = nn.Conv2d # 调用二维卷积
+   
+        self.in_channels = in_channels
+        self.inter_channels = self.in_channels // reduction
+        conv_nd = nn.Conv2d
         max_pool_layer = nn.MaxPool2d(kernel_size=(2, 2))
-        bn = nn.BatchNorm2d # 调用归一化处理
+        bn = nn.BatchNorm2d 
         self.W = conv_nd(in_channels=self.inter_channels, out_channels=self.in_channels,
                              kernel_size=1, stride=1, padding=0, bias=False)
-        nn.init.constant_(self.W.weight, 0) # 用0填充向量
-        # 二维卷积层
+        nn.init.constant_(self.W.weight, 0) 
+
         self.g = conv_nd(in_channels=self.in_channels, out_channels=self.inter_channels,
                          kernel_size=1, stride=1, padding=0, bias=False)
         self.theta = conv_nd(in_channels=self.in_channels, out_channels=self.inter_channels,
@@ -282,8 +280,8 @@ class NONLocalBlock2D(nn.Module):
     def count_cov_second(self, input):
         x = input
         batchSize, dim, M = x.data.shape
-        x_mean_band = x.mean(2).view(batchSize, dim, 1).expand(batchSize, dim, M) # 对第三维度求均值，然后填充成M维
-        y = (x - x_mean_band).bmm(x.transpose(1, 2)) / M # 减去第三维度的均值乘以经过变换的x再除以m
+        x_mean_band = x.mean(2).view(batchSize, dim, 1).expand(batchSize, dim, M) 
+        y = (x - x_mean_band).bmm(x.transpose(1, 2)) / M 
         return y
 
   
@@ -298,13 +296,11 @@ class NONLocalBlock2D(nn.Module):
         y = torch.matmul(f_div_C, g_x) # tensor
         y = y.permute(0, 2, 1).contiguous() 
         y = y.view(batch_size, self.inter_channels, *x.size()[2:])
-        W_y = self.W(y) # 1*1*C卷积层
+        W_y = self.W(y) 
         z = W_y + x
         return z
 
-'''
-downsample环节，卷积核为自定义，目的是缩小图像大小
-'''
+
 
 def pixel_unshuffle(input, downscale_factor):
     c = input.shape[1]
@@ -314,9 +310,7 @@ def pixel_unshuffle(input, downscale_factor):
             kernel[x + y * downscale_factor::downscale_factor * downscale_factor, 0, y, x] = 1
     return F.conv2d(input, kernel, stride=downscale_factor, groups=c)
 
-'''
-PSNL模块
-'''
+
 
 class PSNL(nn.Module):
     def __init__(self, channels):
@@ -470,7 +464,7 @@ class SwinTransformer(nn.Module):
         # out = F.view(features.size(0), -1)
         # out = self.classifier0(out)
 
-        # x = x.mean(dim=[2, 3]) # 去除第三四维
+        # x = x.mean(dim=[2, 3])
         # out1 = self.mlp_head(x)
         # p = out2 + out1
         return out
