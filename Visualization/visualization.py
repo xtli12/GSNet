@@ -1,12 +1,12 @@
 # from swin_Den4KVStage3q_sota_visualize import *
-import argparse # 导入参数解析器
-import torch.optim as optim # 导入优化算法库
-import torch.backends.cudnn as cudnn # 自动搜寻最优算法
-from torch.utils.data import DataLoader # 数据集读取
-from torch.autograd import Variable # 包装张量（包括数据，导数以及创造者）
-import os # 文件操作
-import time # 时间
-from utils_swin import AverageMeter, initialize_logger, save_checkpoint, record_loss # 参数初始化，训练结果保存，神经网络模型保存，记录loss，loss_train和rgb的计算
+import argparse 
+import torch.optim as optim 
+import torch.backends.cudnn as cudnn 
+from torch.utils.data import DataLoader 
+from torch.autograd import Variable 
+import os 
+import time 
+from utils_swin import AverageMeter, initialize_logger, save_checkpoint, record_loss 
 import torchvision
 from torchvision import transforms
 import shutil
@@ -21,8 +21,8 @@ from swin_Den4KVStage3q_sota_densenet_visualize import *
 model = SwinTransformer(hidden_dim=96, layers=(2, 2, 6, 2), heads=(3, 6, 12, 24), growth_rate=32, block_config=(6, 12, 24, 16),
                  num_init_features=64, bn_size=4, drop_rate=0)
 
-# resume_file = os.path.join(os.path.join('./Results/GSNet_visualize/'), 'net_14epoch.pth') # 预加载swin历史训练模型
-resume_file = os.path.join(os.path.join('./Results/GSNet_visualize/'), 'net_417epoch.pth') # 预加载历史训练模型
+# resume_file = os.path.join(os.path.join('./Results/GSNet_visualize/'), 'net_14epoch.pth') 
+resume_file = os.path.join(os.path.join('./Results/GSNet_visualize/'), 'net_417epoch.pth') 
 if resume_file:
     if os.path.isfile(resume_file):
         print("=> loading checkpoint '{}'".format(resume_file))
